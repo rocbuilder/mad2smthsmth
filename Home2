@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+    <head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="jquerymobile.css">
+		<script src="jquery-2.1.3.min.js"></script>
+		<script src="jquerymobile.js"></script>
+		<script src="www/bus-services/"></script>
+		
+		<script> 
+		// ====================================================================== takes 2 sets of coords and uses google maps to plot the path
+		var lats; //starting coords
+		var lngs;
+		
+		var latd; //destination coords
+		var lngd;
+		
+		var zm = 15; //zoom
+		
+		var webpage;
+		
+		function directions(lats, lngs, latd, lngd) { //lats and lngs = starting coords, latd and lngd = destination, lats and lngs and zm is where the view is
+			webpage = "https://www.google.com.sg/maps/dir/" + lats + "," + lngs + "/" + latd + "," + lngd + "/@" + lats + "," + lngs + "," + zm + "z/data=!3m1!4b1!4m4!4m3!2m1!5e0!3e3";
+			console.log("opening " + webpage);
+			window.open(webpage);
+		}
+		
+		</script>
+		
+		
+		<script>
+        var bus ;
+        var busRoutes = {};
+		var busnum;
+		var busStopCoords;
+		
+        function search(busnum){
+			$.getJSON("bus-services/"+busnum+".json", function(dataStop){
+				//console.log("datastop");
+				var busStop = "77009"; //"77009" should be changed to some form of user input
+				var n;
+				var direction;
+				//if else statement to check both directions for the bus stop
+				if (dataStop["1"].stops.indexOf(busStop) !=-1) {
+					direction = "1";
+				}
+				else if (dataStop["2"].stops.indexOf(busStop) !=-1) {
+					direction = "2";
+				}
+				else{
+					console.log("error, bus stop number not found");
+				}
+				n = dataStop[direction].stops.indexOf(busStop);
+				busStopCoords = dataStop[direction].route[n];
+				
+			//	var arrayLength = dataStop[direction].route.length;
+			//	for (var i = 0; i < arrayLength; i++) {
+			//		console.log(dataStop[direction].route[i]);
+			//	}
+				console.log("coords of bus stop " + busStop + ": " + busStopCoords);
+			});
+			$.getJSON("js/bus-services.json", function(dataRoutes){
+				//console.log("alerting bus number"+ " " +busnum);
+				//alert(busnum);
+				busRoutes = dataRoutes.services[busnum].name;
+				console.log(busRoutes);
+			});
+        }
+		</script>
+		
+		<script>
+			var CLat
+			var CLng
+			var CAltitude
+			var CAccuracy
+			var Clatlng
+			var direction
+			var options
+			var x = document.getElementById("information");
+			
+			function geoFindMe(){
+				setInterval(function getposition(){navigator.geolocation.getCurrentPosition(success, error, geo_options);},3000);
+				
+				function success(position) {
+					latitude = position.coords.latitude;
+					longitude = position.coords.longitude;
+					altitude = position.coords.altitude;
+					accuracy = position.coords.accuracy;
+					latlng = new GLatLng(latitude, longitude);
+					if (navigator.geolocation) {
+					navigator.geolocation.getCurrentPosition(showPosition);
+				} else { 
+					x.innerHTML = "Geolocation is not supported.";
+				}
+					
+				}
+ 
+				function error(error) {
+					alert("Unable to retrieve your location due to "+error.code + " : " + error.message);
+					geoFindMe();
+				};
+ 
+				var geo_options = {
+					enableHighAccuracy: true,
+					maximumAge : 30000,
+					timeout : 27000
+				};
+			}
+		</script>
+		<script>
+			function formFunction(){
+				var busnum = document.getElementById("busnumber").value;
+				
+				//alert(busnum);
+				//test();
+				search(busnum);
+				//directions(1.33780381373794, 103.70689097976616, 1.3910420487699, 103.88974726496834);
+				
+			}
+		</script>
+	</head>
+    
+    <body>
+		<div id="results"></div>
+		<div data-role="page" id="SearchForBus">
+            <div data-role="content"></div>
+			<div id="sidebar" style="width:300px;float:left;">
+				<form id="form" onsubmit="return false;">
+						<label style="width:70px;display:inline-block;">Bus No.:</label>
+						<input type="text" size="10" id="busnumber"/>
+						<a data-role="button" href="#page2" onclick="formFunction()">Go</a>
+				</form>
+			</div>
+		</div>
+		<div data-role="page" id="page2">
+            <div data-role="content">
+				<p id="information"></p>
+				<div id="map" style="width: 500px; height: 400px;"></div>
+
+  <script type="text/javascript">
+
+    var map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 10,
+      center: new google.maps.LatLng(1.3549644,103.9437274),
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    });
+
+    var infowindow = new google.maps.InfoWindow();
+	$.getJSON("bus-services/"+busnum+".json", function(dataStop){
+	var arrayLength = dataStop[direction].route.length;
+    var marker, i;
+
+    for (i = 0; i < locations.length; i++) {  
+      marker = new google.maps.Marker({
+        position: new google.maps.LatLng(dataStop[direction].route[i]),
+        map: map
+      });
+	  }
+	);
+
+      google.maps.event.addListener(marker, 'click', (function(marker, i) {
+        return function() {
+          infowindow.open(map, marker);
+        }
+      })(marker, i));
+    }
+  </script>
+			</div>
+        </div>
+    </body>
+
+</html>
